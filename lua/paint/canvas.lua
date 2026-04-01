@@ -21,13 +21,15 @@ local function set_cursor(state, row, col)
   pcall(vim.api.nvim_win_set_cursor, state.canvas_win, { row, byte })
 end
 
---- Fill the canvas buffer with blank lines.
+--- Fill the canvas buffer with blank lines + right/bottom border.
 function M.init_lines(state)
-  local blank = string.rep(" ", state.canvas_cols)
+  local blank = string.rep(" ", state.canvas_cols) .. "│"
+  local bot   = string.rep("─", state.canvas_cols) .. "┘"
   local lines = {}
   for i = 1, state.canvas_rows do
     lines[i] = blank
   end
+  lines[state.canvas_rows + 1] = bot
   vim.api.nvim_buf_set_lines(state.canvas_buf, 0, -1, false, lines)
 end
 
@@ -61,7 +63,7 @@ function M.render(state)
       byte          = byte + #ch
     end
 
-    all_lines[r] = table.concat(chars)
+    all_lines[r] = table.concat(chars) .. "│"
 
     if row_cells then
       for c, cell in pairs(row_cells) do
@@ -73,6 +75,8 @@ function M.render(state)
       end
     end
   end
+
+  all_lines[state.canvas_rows + 1] = string.rep("─", state.canvas_cols) .. "┘"
 
   -- Write text first, then extmarks (set_lines invalidates existing marks).
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, all_lines)
@@ -106,6 +110,9 @@ function M.register_keymaps(state)
   local function draw_at_mouse()
     local pos = vim.fn.getmousepos()
     if pos.winid ~= state.canvas_win then return end
+    -- Ignore clicks on the right/bottom border characters
+    if pos.line > state.canvas_rows then return end
+    if pos.column > state.canvas_cols then return end
     state.cursor_row = pos.line
     state.cursor_col = pos.column  -- screen col == cell col for single-width chars
     -- Move cursor using correct byte offset (not the raw screen col).
@@ -153,6 +160,20 @@ function M.register_keymaps(state)
   vim.keymap.set("n", "j",       move_fn( 1,  0), o)
   vim.keymap.set("n", "h",       move_fn( 0, -1), o)
   vim.keymap.set("n", "l",       move_fn( 0,  1), o)
+
+  local function jump_fn(row, col)
+    return function()
+      if row ~= nil then state.cursor_row = row end
+      if col ~= nil then state.cursor_col = col end
+      set_cursor(state, state.cursor_row, state.cursor_col)
+      if state.pen_down then draw_at(state.cursor_row, state.cursor_col) end
+    end
+  end
+
+  vim.keymap.set("n", "<Home>",  jump_fn(nil, 1),                   o)
+  vim.keymap.set("n", "<End>",   jump_fn(nil, state.canvas_cols),   o)
+  vim.keymap.set("n", "<PageUp>",   jump_fn(1, nil),                o)
+  vim.keymap.set("n", "<PageDown>", jump_fn(state.canvas_rows, nil), o)
 
   -- Space: pen down → draw at current cell position.
   vim.keymap.set("n", "<Space>", function()
