@@ -4,13 +4,13 @@ local highlight = require("paint.highlight")
 
 --- Fill the canvas buffer with blank lines + right/bottom border.
 function M.init_lines(state)
-  local blank = string.rep(" ", state.canvas_cols) .. "│"
-  local bot   = string.rep("─", state.canvas_cols) .. "┘"
-  local lines = {}
+  local blank  = string.rep(" ", state.canvas_cols) .. "│"
+  local bottom = string.rep("─", state.canvas_cols) .. "┘"
+  local lines  = {}
   for i = 1, state.canvas_rows do
     lines[i] = blank
   end
-  lines[state.canvas_rows + 1] = bot
+  lines[state.canvas_rows + 1] = bottom
   vim.api.nvim_buf_set_lines(state.canvas_buf, 0, -1, false, lines)
 end
 
@@ -21,8 +21,8 @@ function M.render(state)
   if state.rendering then return end
   state.rendering = true
 
-  local buf = state.canvas_buf
-  local ns  = state.ns_canvas
+  local buf       = state.canvas_buf
+  local ns        = state.ns_canvas
 
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
 
@@ -31,14 +31,14 @@ function M.render(state)
   local pending_marks = {} -- { row0, byte_start, byte_end, hl_name }
 
   for r = 1, state.canvas_rows do
-    local row_cells = state.cells[r]
+    local row_cells  = state.cells[r]
     local chars      = {}
     local byte_start = {} -- byte_start[c] = 0-indexed byte offset of cell c
     local byte       = 0
 
     for c = 1, state.canvas_cols do
-      local cell = row_cells and row_cells[c] or nil
-      local ch   = (cell and cell.char) or " "
+      local cell    = row_cells and row_cells[c] or nil
+      local ch      = (cell and cell.char) or " "
       byte_start[c] = byte
       chars[c]      = ch
       byte          = byte + #ch
@@ -117,16 +117,16 @@ function M.register_keymaps(state)
       local row = math.min(pos[2], state.canvas_rows) -- clamp to avoid invalid line index
       local col = math.min(pos[3], state.canvas_cols) -- clamp to avoid invalid byte offset
 
-      vim.fn.setcharpos(".", { 0, row, col, 0 }) -- prevent cursor from moving to invalid byte offset
+      vim.fn.setcharpos(".", { 0, row, col, 0 })      -- prevent cursor from moving to invalid byte offset
 
       if state.pen_down then draw_at(row, col) end
     end,
   })
 
-  vim.keymap.set("n", "<PageUp>",   "gg", o)
-  vim.keymap.set("n", "<PageDown>", "G",  o)
-  vim.keymap.set("n", "<D-Up>",     "gg", o)
-  vim.keymap.set("n", "<D-Down>",   "G",  o)
+  vim.keymap.set("n", "<PageUp>", "gg", o)
+  vim.keymap.set("n", "<PageDown>", "G", o)
+  vim.keymap.set("n", "<D-Up>", "gg", o)
+  vim.keymap.set("n", "<D-Down>", "G", o)
 
   -- Space: pen down → draw at current cell position.
   vim.keymap.set("n", "<Space>", function()
@@ -197,7 +197,7 @@ function M.register_keymaps(state)
   end, o)
 
   vim.keymap.set("n", "q", function()
-    vim.cmd("tabclose")
+    vim.cmd("qall")
   end, o)
 
   -- Save: prompt for filename; dispatch on extension (.ansi vs .paint default)

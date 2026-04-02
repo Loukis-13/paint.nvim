@@ -76,7 +76,7 @@ function M.save_ansi(state, path)
   for r = 1, state.canvas_rows do
     local row_cells = state.cells[r]
     local parts     = {}
-    local cur_fg    = nil  -- last emitted fg color (for delta encoding)
+    local cur_fg    = nil -- last emitted fg color (for delta encoding)
     local cur_bg    = nil
     local has_color = false
 

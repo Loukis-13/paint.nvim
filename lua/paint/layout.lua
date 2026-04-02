@@ -32,14 +32,14 @@ local function apply_buf_opts(buf)
   end
 end
 
-function M.open()
-  local state   = require("paint.state").new()
-  local canvas  = require("paint.canvas")
-  local palette = require("paint.palette")
+function M.open(opts)
+  local state       = require("paint.state").new(opts)
+  local canvas      = require("paint.canvas")
+  local palette     = require("paint.palette")
 
   -- Create namespaces
-  state.ns_canvas  = vim.api.nvim_create_namespace("paint_canvas")
-  state.ns_palette = vim.api.nvim_create_namespace("paint_palette")
+  state.ns_canvas   = vim.api.nvim_create_namespace("paint_canvas")
+  state.ns_palette  = vim.api.nvim_create_namespace("paint_palette")
 
   -- Create scratch buffers (buflisted=false keeps them out of bufferline plugins)
   state.canvas_buf  = vim.api.nvim_create_buf(false, true)
@@ -91,8 +91,8 @@ function M.open()
 
   -- Clean up when the canvas buffer is wiped
   vim.api.nvim_create_autocmd("BufWipeout", {
-    buffer = state.canvas_buf,
-    once   = true,
+    buffer   = state.canvas_buf,
+    once     = true,
     callback = function()
       pcall(vim.api.nvim_buf_delete, state.palette_buf, { force = true })
     end,
