@@ -111,10 +111,10 @@ function M.register_keymaps(state)
     local pos = vim.fn.getmousepos()
     if pos.winid ~= state.canvas_win then return end
     -- Ignore clicks on the right/bottom border characters
-    if pos.line > state.canvas_rows then return end
-    if pos.column > state.canvas_cols then return end
-    state.cursor_row = pos.line
-    state.cursor_col = pos.column  -- screen col == cell col for single-width chars
+    if pos.winrow > state.canvas_rows then return end
+    if pos.wincol > state.canvas_cols then return end
+    state.cursor_row = pos.winrow
+    state.cursor_col = pos.wincol
     -- Move cursor using correct byte offset (not the raw screen col).
     set_cursor(state, state.cursor_row, state.cursor_col)
     draw_at(state.cursor_row, state.cursor_col)
