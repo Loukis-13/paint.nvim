@@ -33,14 +33,6 @@ function M.new()
     -- populated on every palette render; used to map mouse clicks → colors
     palette_swatches = {},
 
-    -- authoritative cursor position in cell coordinates (1-indexed)
-    -- never read back from nvim_win_get_cursor (which returns byte offsets)
-    cursor_row = 1,
-    cursor_col = 1,
-
-    -- mouse drag state
-    is_dragging = false,
-
     -- keyboard pen state: true = pen down, arrows draw; false = arrows only move
     pen_down = false,
 

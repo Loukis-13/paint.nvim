@@ -2,25 +2,6 @@ local M = {}
 
 local highlight = require("paint.highlight")
 
---- Compute the 0-indexed byte offset of cell `col` in row `row`.
---- Each cell may hold a multi-byte UTF-8 character, so we sum #char of all
---- preceding cells rather than assuming 1 byte = 1 cell.
-local function cell_to_byte(state, row, col)
-  local byte = 0
-  local row_cells = state.cells[row]
-  for c = 1, col - 1 do
-    local cell = row_cells and row_cells[c] or nil
-    byte = byte + #((cell and cell.char) or " ")
-  end
-  return byte
-end
-
---- Move the Neovim cursor to the given cell position.
-local function set_cursor(state, row, col)
-  local byte = cell_to_byte(state, row, col)
-  pcall(vim.api.nvim_win_set_cursor, state.canvas_win, { row, byte })
-end
-
 --- Fill the canvas buffer with blank lines + right/bottom border.
 function M.init_lines(state)
   local blank = string.rep(" ", state.canvas_cols) .. "│"
@@ -105,34 +86,23 @@ function M.register_keymaps(state)
     M.render(state)
   end
 
-  -- Mouse: getmousepos().column is the 1-indexed SCREEN column.
-  -- For single-width chars (all block/box-drawing chars), screen col = cell col.
   local function draw_at_mouse()
     local pos = vim.fn.getmousepos()
     if pos.winid ~= state.canvas_win then return end
     -- Ignore clicks on the right/bottom border characters
     if pos.winrow > state.canvas_rows then return end
     if pos.wincol > state.canvas_cols then return end
-    state.cursor_row = pos.winrow
-    state.cursor_col = pos.wincol
-    -- Move cursor using correct byte offset (not the raw screen col).
-    set_cursor(state, state.cursor_row, state.cursor_col)
-    draw_at(state.cursor_row, state.cursor_col)
+    draw_at(pos.winrow, pos.wincol)
     palette.render(state)
   end
 
   -- ── Mouse ────────────────────────────────────────────────────────────────
   vim.keymap.set("n", "<LeftMouse>", function()
-    state.is_dragging = true
     draw_at_mouse()
   end, o)
 
   vim.keymap.set("n", "<LeftDrag>", function()
-    if state.is_dragging then draw_at_mouse() end
-  end, o)
-
-  vim.keymap.set("n", "<LeftRelease>", function()
-    state.is_dragging = false
+    draw_at_mouse()
   end, o)
 
   -- ── Block insert-mode entry ───────────────────────────────────────────────
@@ -140,45 +110,29 @@ function M.register_keymaps(state)
     vim.keymap.set("n", k, "<Nop>", o)
   end
 
-  -- ── Keyboard navigation + drawing ────────────────────────────────────────
-  -- We track cursor_row/col in state (cell coordinates) and derive byte offsets
-  -- via cell_to_byte only when calling nvim_win_set_cursor.
-  local function move_fn(dr, dc)
-    return function()
-      state.cursor_row = math.max(1, math.min(state.canvas_rows, state.cursor_row + dr))
-      state.cursor_col = math.max(1, math.min(state.canvas_cols, state.cursor_col + dc))
-      set_cursor(state, state.cursor_row, state.cursor_col)
-      if state.pen_down then draw_at(state.cursor_row, state.cursor_col) end
-    end
-  end
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    buffer = buf,
+    callback = function()
+      local pos = vim.fn.getcursorcharpos()
+      local row = math.min(pos[2], state.canvas_rows) -- clamp to avoid invalid line index
+      local col = math.min(pos[3], state.canvas_cols) -- clamp to avoid invalid byte offset
 
-  vim.keymap.set("n", "<Up>",    move_fn(-1,  0), o)
-  vim.keymap.set("n", "<Down>",  move_fn( 1,  0), o)
-  vim.keymap.set("n", "<Left>",  move_fn( 0, -1), o)
-  vim.keymap.set("n", "<Right>", move_fn( 0,  1), o)
-  vim.keymap.set("n", "k",       move_fn(-1,  0), o)
-  vim.keymap.set("n", "j",       move_fn( 1,  0), o)
-  vim.keymap.set("n", "h",       move_fn( 0, -1), o)
-  vim.keymap.set("n", "l",       move_fn( 0,  1), o)
+      vim.fn.setcharpos(".", { 0, row, col, 0 }) -- prevent cursor from moving to invalid byte offset
 
-  local function jump_fn(row, col)
-    return function()
-      if row ~= nil then state.cursor_row = row end
-      if col ~= nil then state.cursor_col = col end
-      set_cursor(state, state.cursor_row, state.cursor_col)
-      if state.pen_down then draw_at(state.cursor_row, state.cursor_col) end
-    end
-  end
+      if state.pen_down then draw_at(row, col) end
+    end,
+  })
 
-  vim.keymap.set("n", "<Home>",  jump_fn(nil, 1),                   o)
-  vim.keymap.set("n", "<End>",   jump_fn(nil, state.canvas_cols),   o)
-  vim.keymap.set("n", "<PageUp>",   jump_fn(1, nil),                o)
-  vim.keymap.set("n", "<PageDown>", jump_fn(state.canvas_rows, nil), o)
+  vim.keymap.set("n", "<PageUp>",   "gg", o)
+  vim.keymap.set("n", "<PageDown>", "G",  o)
+  vim.keymap.set("n", "<D-Up>",     "gg", o)
+  vim.keymap.set("n", "<D-Down>",   "G",  o)
 
   -- Space: pen down → draw at current cell position.
   vim.keymap.set("n", "<Space>", function()
     state.pen_down = true
-    draw_at(state.cursor_row, state.cursor_col)
+    local pos = vim.fn.getcursorcharpos()
+    draw_at(pos[2], pos[3])
     palette.render(state)
   end, o)
 
@@ -232,7 +186,8 @@ function M.register_keymaps(state)
 
   -- Eyedropper: pick from cell at current cursor position.
   vim.keymap.set("n", "r", function()
-    local cell = (state.cells[state.cursor_row] or {})[state.cursor_col]
+    local pos = vim.fn.getcursorcharpos()
+    local cell = (state.cells[pos[2]] or {})[pos[3]]
     if cell then
       state.fg   = cell.fg
       state.bg   = cell.bg
