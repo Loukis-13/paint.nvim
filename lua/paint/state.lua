@@ -23,10 +23,9 @@ function M.new(opts)
     cells       = {},
 
     -- current drawing state
-    -- fg/bg: number (ANSI 0-15) or string ("#RRGGBB")
     tool        = "pencil",
-    fg          = 15,      -- white
-    bg          = 0,       -- black
+    fg          = "#FFFFFF",
+    bg          = "#000000",
     char        = "█",
 
     -- keyboard pen state: true = pen down, arrows draw; false = arrows only move

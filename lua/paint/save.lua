@@ -1,15 +1,7 @@
 local M = {}
 
-local hl = require("paint.highlight")
-
---- Resolve a color (ANSI index or "#RRGGBB") to its R, G, B components.
-local function to_rgb(c)
-  local hex
-  if type(c) == "number" then
-    hex = hl.ANSI_TO_HEX[c] or "#000000"
-  else
-    hex = c
-  end
+--- Resolve a color to its R, G, B components.
+local function to_rgb(hex)
   hex = hex:gsub("^#", "")
   return tonumber(hex:sub(1, 2), 16),
          tonumber(hex:sub(3, 4), 16),

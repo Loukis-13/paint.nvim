@@ -156,7 +156,7 @@ function M.register_keymaps(state)
   end, o)
 
   vim.keymap.set("n", "f", function()
-    vim.ui.input({ prompt = "FG color (0-f or #RRGGBB): " }, function(input)
+    vim.ui.input({ prompt = "FG color #(RRGGBB): " }, function(input)
       local c = highlight.parse_color(input)
       if c ~= nil then
         state.fg = c
@@ -166,7 +166,7 @@ function M.register_keymaps(state)
   end, o)
 
   vim.keymap.set("n", "b", function()
-    vim.ui.input({ prompt = "BG color (0-f or #RRGGBB): " }, function(input)
+    vim.ui.input({ prompt = "BG color #(RRGGBB): " }, function(input)
       local c = highlight.parse_color(input)
       if c ~= nil then
         state.bg = c
