@@ -3,7 +3,7 @@ local M = {}
 function M.setup(opts)
   vim.api.nvim_create_user_command("Paint", function(args)
     for _, arg in ipairs(args.fargs) do
-      local key, value = arg:match("(%w+)=(%w+)")
+      local key, value = arg:match("([%w_]+)=(%w+)")
       if key then opts[key] = value end
     end
 

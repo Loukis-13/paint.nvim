@@ -65,6 +65,19 @@ function M.ensure_hl(fg, bg)
   return name
 end
 
+function M.get_highlight(row, col)
+  local extmark = vim.inspect_pos(nil, row, col).extmarks[1]
+
+  if extmark then
+    local hl_group = extmark.opts.hl_group
+    local hl = vim.api.nvim_get_hl(0, { name = hl_group })
+    return {
+      fg = string.format("#%06x", hl.fg),
+      bg = string.format("#%06x", hl.bg)
+    }
+  end
+end
+
 --- Parse a user-supplied color string into the internal representation.
 --- Accepts:
 ---   "0"-"f" or "0"-"9","a"-"f"  → ANSI index number (0-15)

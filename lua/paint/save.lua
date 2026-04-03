@@ -78,7 +78,6 @@ function M.save_ansi(state, path)
     local parts     = {}
     local cur_fg    = nil -- last emitted fg color (for delta encoding)
     local cur_bg    = nil
-    local has_color = false
 
     for c = 1, state.canvas_cols do
       local cell = row_cells and row_cells[c] or nil
@@ -95,7 +94,6 @@ function M.save_ansi(state, path)
           cur_bg = cell.bg
         end
         parts[#parts + 1] = esc .. cell.char
-        has_color = true
       else
         -- Empty cell: reset then space if we had color active
         if cur_fg ~= nil or cur_bg ~= nil then

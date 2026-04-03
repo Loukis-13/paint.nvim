@@ -75,11 +75,11 @@ end
 
 --- Register all canvas buffer keymaps.
 function M.register_keymaps(state)
-  local tools   = require("paint.tools")
-  local palette = require("paint.palette")
-  local hl      = require("paint.highlight")
-  local buf     = state.canvas_buf
-  local o       = { noremap = true, silent = true, buffer = buf }
+  local tools     = require("paint.tools")
+  local palette   = require("paint.palette")
+  local highlight = require("paint.highlight")
+  local buf       = state.canvas_buf
+  local o         = { noremap = true, silent = true, buffer = buf }
 
   local function draw_at(row, col)
     tools.apply(state, row, col)
@@ -106,7 +106,7 @@ function M.register_keymaps(state)
   end, o)
 
   -- ── Block insert-mode entry ───────────────────────────────────────────────
-  for _, k in ipairs({ "i", "I", "a", "A", "o", "O", "s", "S", "R" }) do
+  for _, k in ipairs({ "i", "I", "a", "A", "o", "O", "s", "S", "r", "R" }) do
     vim.keymap.set("n", k, "<Nop>", o)
   end
 
@@ -157,7 +157,7 @@ function M.register_keymaps(state)
 
   vim.keymap.set("n", "f", function()
     vim.ui.input({ prompt = "FG color (0-f or #RRGGBB): " }, function(input)
-      local c = hl.parse_color(input)
+      local c = highlight.parse_color(input)
       if c ~= nil then
         state.fg = c
         palette.render(state)
@@ -167,7 +167,7 @@ function M.register_keymaps(state)
 
   vim.keymap.set("n", "b", function()
     vim.ui.input({ prompt = "BG color (0-f or #RRGGBB): " }, function(input)
-      local c = hl.parse_color(input)
+      local c = highlight.parse_color(input)
       if c ~= nil then
         state.bg = c
         palette.render(state)
@@ -185,19 +185,22 @@ function M.register_keymaps(state)
   end, o)
 
   -- Eyedropper: pick from cell at current cursor position.
-  vim.keymap.set("n", "r", function()
-    local pos = vim.fn.getcursorcharpos()
-    local cell = (state.cells[pos[2]] or {})[pos[3]]
-    if cell then
-      state.fg   = cell.fg
-      state.bg   = cell.bg
-      state.char = cell.char
-      palette.render(state)
+  vim.keymap.set("n", "Pf", function()
+    local hl = highlight.get_highlight()
+
+    if hl then
+      state.fg = hl.fg
+      M.render(state)
     end
   end, o)
 
-  vim.keymap.set("n", "q", function()
-    vim.cmd("qall")
+  vim.keymap.set("n", "Pb", function()
+    local hl = highlight.get_highlight()
+
+    if hl then
+      state.bg = hl.bg
+      M.render(state)
+    end
   end, o)
 
   -- Save: prompt for filename; dispatch on extension (.ansi vs .paint default)

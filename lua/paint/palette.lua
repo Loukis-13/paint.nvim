@@ -1,9 +1,9 @@
-local M = {}
+local M              = {}
 
-local highlight = require("paint.highlight")
+local highlight      = require("paint.highlight")
 
 -- Height of the palette panel (2 rows: one per color row)
-M.HEIGHT = 2
+M.HEIGHT             = 2
 
 -- 28 MS Paint-style colors: 14 per row.
 -- Row 1: primary/mid tones.  Row 2: lighter/darker variants.
@@ -31,50 +31,40 @@ local PALETTE_COLORS = {
 -- Line 2:  "             [color 15..28 × 2 chars]  <hints>"
 --           13-byte indent, then colors at same offset as line 1
 
-local SWATCH_W  = 2   -- bytes per color swatch (two spaces)
-local FG_CS     = 3
-local FG_CE     = 5
-local BG_CS     = 9
-local BG_CE     = 11
-local CLR_START = 13  -- byte offset where color swatches begin (both rows)
-
---- Shorten a color value for the status display.
-local function color_label(c)
-  if type(c) == "number" then
-    return string.format("%X", c)
-  end
-  return c:gsub("^#", ""):upper()
-end
+local SWATCH_W       = 2 -- bytes per color swatch (two spaces)
+local FG_CS          = 3
+local FG_CE          = 5
+local BG_CS          = 9
+local BG_CE          = 11
+local CLR_START      = 13 -- byte offset where color swatches begin (both rows)
 
 --- Build the 2 palette lines and swatch geometry list.
 --- Returns lines (string[]) and swatches ({row,cs,ce,color,kind}[]).
 local function build_palette(state)
-  local lines    = {}
-  local swatches = {}
+  local lines             = {}
+  local swatches          = {}
 
   -- Status values
-  local fg_lbl  = string.sub(color_label(state.fg) .. "        ", 1, 7)
-  local bg_lbl  = string.sub(color_label(state.bg) .. "        ", 1, 7)
-  local pen_str = state.pen_down and " PEN\xe2\x86\x93" or "      "  -- ↓ = U+2193
+  local pen_str           = state.pen_down and " PEN\xe2\x86\x93" or "      " -- ↓ = U+2193
 
   -- 14-color swatch strings (two spaces per color = 28 bytes of spaces per row)
-  local row1_str = string.rep("  ", 14)
-  local row2_str = string.rep("  ", 14)
+  local row1_str          = string.rep("  ", 14)
+  local row2_str          = string.rep("  ", 14)
 
   -- Line 1
-  lines[1] = "FG:  " ..         -- "FG:" + 2-char FG swatch  → bytes 0-4
-             " BG:  " ..         -- " BG:" + 2-char BG swatch → bytes 5-10
-             "  " ..             -- gap                        → bytes 11-12
-             row1_str ..         -- 14 color swatches          → bytes 13-40
-             "  " ..
-             "Char:" .. state.char ..
-             "  Tool:" .. string.format("%-7s", state.tool) ..
-             pen_str
+  lines[1]                = "FG:  " .. -- "FG:" + 2-char FG swatch  → bytes 0-4
+      " BG:  " ..        -- " BG:" + 2-char BG swatch → bytes 5-10
+      "  " ..            -- gap                        → bytes 11-12
+      row1_str ..        -- 14 color swatches          → bytes 13-40
+      "  " ..
+      "Char:" .. state.char ..
+      "  Tool:" .. string.format("%-7s", state.tool) ..
+      pen_str
 
   -- Line 2: 13-byte indent then row 2 colors then key hints
-  lines[2] = string.rep(" ", CLR_START) ..
-             row2_str ..
-             "  <f>g <b>g <c>har  <p>encil <e>raser <r>pick <q>uit  <Spc>pen <Esc>lift"
+  lines[2]                = string.rep(" ", CLR_START) ..
+      row2_str ..
+      "  <f>g <b>g <c>har  <p>encil <e>raser <r>pick <Spc>pen <Esc>lift"
 
   -- Swatch geometry ─────────────────────────────────────────────────────────
 
@@ -86,8 +76,11 @@ local function build_palette(state)
   for i = 1, 14 do
     local cs = CLR_START + (i - 1) * SWATCH_W
     swatches[#swatches + 1] = {
-      row = 0, cs = cs, ce = cs + SWATCH_W,
-      color = PALETTE_COLORS[i], kind = "swatch",
+      row = 0,
+      cs = cs,
+      ce = cs + SWATCH_W,
+      color = PALETTE_COLORS[i],
+      kind = "swatch",
     }
   end
 
@@ -95,8 +88,11 @@ local function build_palette(state)
   for i = 1, 14 do
     local cs = CLR_START + (i - 1) * SWATCH_W
     swatches[#swatches + 1] = {
-      row = 1, cs = cs, ce = cs + SWATCH_W,
-      color = PALETTE_COLORS[14 + i], kind = "swatch",
+      row = 1,
+      cs = cs,
+      ce = cs + SWATCH_W,
+      color = PALETTE_COLORS[14 + i],
+      kind = "swatch",
     }
   end
 
@@ -111,7 +107,6 @@ function M.render(state)
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
 
   local lines, swatches = build_palette(state)
-  state.palette_swatches = swatches
 
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
@@ -133,16 +128,6 @@ function M.render(state)
   end
 end
 
---- Return the palette color at 0-indexed (row, col), or nil.
-local function find_swatch(state, row, col)
-  for _, sw in ipairs(state.palette_swatches) do
-    if sw.kind == "swatch" and sw.row == row and col >= sw.cs and col < sw.ce then
-      return sw.color
-    end
-  end
-  return nil
-end
-
 --- Register palette buffer keymaps (left-click = set fg, right-click = set bg).
 function M.register_keymaps(state)
   local buf = state.palette_buf
@@ -150,20 +135,37 @@ function M.register_keymaps(state)
 
   vim.keymap.set("n", "<LeftMouse>", function()
     local pos = vim.fn.getmousepos()
-    if pos.winid ~= state.palette_win then return end
-    local color = find_swatch(state, pos.line - 1, pos.column - 1)
-    if color ~= nil then
-      state.fg = color
+    local hl = highlight.get_highlight(pos.line - 1, pos.column - 1)
+    if hl then
+      state.fg = hl.fg
       M.render(state)
     end
   end, o)
 
   vim.keymap.set("n", "<RightMouse>", function()
     local pos = vim.fn.getmousepos()
-    if pos.winid ~= state.palette_win then return end
-    local color = find_swatch(state, pos.line - 1, pos.column - 1)
-    if color ~= nil then
-      state.bg = color
+    local hl = highlight.get_highlight(pos.line - 1, pos.column - 1)
+    if hl then
+      state.bg = hl.bg
+      M.render(state)
+    end
+  end, o)
+
+  -- Eyedropper: pick from cell at current cursor position.
+  vim.keymap.set("n", "Pf", function()
+    local hl = highlight.get_highlight()
+
+    if hl then
+      state.fg = hl.fg
+      M.render(state)
+    end
+  end, o)
+
+  vim.keymap.set("n", "Pb", function()
+    local hl = highlight.get_highlight()
+
+    if hl then
+      state.bg = hl.bg
       M.render(state)
     end
   end, o)
