@@ -44,8 +44,8 @@ function M.get_highlight(row, col)
   if extmark then
     local hl = vim.api.nvim_get_hl(0, { name = extmark.opts.hl_group })
     return {
-      fg = string.format("#%06x", hl.fg),
-      bg = string.format("#%06x", hl.bg)
+      fg = string.format("#%06X", hl.fg),
+      bg = string.format("#%06X", hl.bg)
     }
   end
 end

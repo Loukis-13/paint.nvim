@@ -190,7 +190,7 @@ function M.register_keymaps(state)
 
     if hl then
       state.fg = hl.fg
-      M.render(state)
+      palette.render(state)
     end
   end, o)
 
@@ -199,7 +199,7 @@ function M.register_keymaps(state)
 
     if hl then
       state.bg = hl.bg
-      M.render(state)
+      palette.render(state)
     end
   end, o)
 

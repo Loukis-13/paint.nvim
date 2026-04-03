@@ -52,17 +52,19 @@ local function build_palette(state)
   local row2_str          = string.rep("  ", 14)
 
   -- Line 1
-  lines[1]                = "FG:  " .. -- "FG:" + 2-char FG swatch  → bytes 0-4
-      " BG:  " ..        -- " BG:" + 2-char BG swatch → bytes 5-10
-      "  " ..            -- gap                        → bytes 11-12
-      row1_str ..        -- 14 color swatches          → bytes 13-40
+  lines[1]                =
+      "FG:  " ..  -- "FG:" + 2-char FG swatch  → bytes 0-4
+      " BG:  " .. -- " BG:" + 2-char BG swatch → bytes 5-10
+      "  " ..     -- gap                        → bytes 11-12
+      row1_str .. -- 14 color swatches          → bytes 13-40
       "  " ..
       "Char:" .. state.char ..
       "  Tool:" .. string.format("%-7s", state.tool) ..
       pen_str
 
   -- Line 2: 13-byte indent then row 2 colors then key hints
-  lines[2]                = string.rep(" ", CLR_START) ..
+  lines[2]                =
+      string.rep(" ", CLR_START) ..
       row2_str ..
       "  <f>g <b>g <c>har  <p>encil <e>raser <r>pick <Spc>pen <Esc>lift"
 
