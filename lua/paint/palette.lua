@@ -22,21 +22,12 @@ local PALETTE_COLORS = {
 
 -- Layout constants (all byte-based; everything before the color swatches is ASCII)
 --
--- Line 1:  "FG:XX BG:XX  [color 1..14 × 2 chars]  Char:C  Tool:T  PEN↓"
---           0123456789...
---           FG: = 3 bytes, swatch = 2 bytes (cs=3,ce=5)
---           " BG:" = 4 bytes, swatch = 2 bytes (cs=9,ce=11)
---           "  " = 2 bytes → colors start at byte 13
---
--- Line 2:  "             [color 15..28 × 2 chars]  <hints>"
---           13-byte indent, then colors at same offset as line 1
+-- FG:XX  [color 1..14 × 2 chars]  Char:X PEN↓ | <f>g <Pf>pick-fg <p>encil <Spc>pen  <c>har
+-- BG:XX  [color 1..14 × 2 chars]  Tool:pencil | <b>g <Pg>pick-bg <e>raser <Esc>lift
 
 local SWATCH_W       = 2 -- bytes per color swatch (two spaces)
 local FG_CS          = 3
-local FG_CE          = 5
-local BG_CS          = 9
-local BG_CE          = 11
-local CLR_START      = 13 -- byte offset where color swatches begin (both rows)
+local CLR_START      = 7 -- byte offset where color swatches begin (both rows)
 
 --- Build the 2 palette lines and swatch geometry list.
 --- Returns lines (string[]) and swatches ({row,cs,ce,color,kind}[]).
@@ -45,34 +36,25 @@ local function build_palette(state)
   local swatches          = {}
 
   -- Status values
-  local pen_str           = state.pen_down and " PEN\xe2\x86\x93" or "      " -- ↓ = U+2193
+  local pen_str           = state.pen_down and "PEN!" or "    "
 
   -- 14-color swatch strings (two spaces per color = 28 bytes of spaces per row)
-  local row1_str          = string.rep("  ", 14)
-  local row2_str          = string.rep("  ", 14)
+  local swatches_row      = string.rep("  ", 14)
 
-  -- Line 1
-  lines[1]                =
-      "FG:  " ..  -- "FG:" + 2-char FG swatch  → bytes 0-4
-      " BG:  " .. -- " BG:" + 2-char BG swatch → bytes 5-10
-      "  " ..     -- gap                        → bytes 11-12
-      row1_str .. -- 14 color swatches          → bytes 13-40
-      "  " ..
-      "Char:" .. state.char ..
-      "  Tool:" .. string.format("%-7s", state.tool) ..
-      pen_str
-
-  -- Line 2: 13-byte indent then row 2 colors then key hints
-  lines[2]                =
-      string.rep(" ", CLR_START) ..
-      row2_str ..
-      "  <f>g <b>g <c>har  <p>encil <e>raser <r>pick <Spc>pen <Esc>lift"
+  lines[1]                = string.format(
+    "FG:%s  %s  Char:%s %s | <f>g <Pf>pick-fg <p>encil <Spc>pen  <c>har",
+    "  ", swatches_row, state.char, pen_str
+  )
+  lines[2]                = string.format(
+    "BG:%s  %s  Tool:%s | <b>g <Pg>pick-bg <e>raser <Esc>lift",
+    "  ", swatches_row, string.format("%-6s", state.tool)
+  )
 
   -- Swatch geometry ─────────────────────────────────────────────────────────
 
   -- FG/BG status swatches
-  swatches[#swatches + 1] = { row = 0, cs = FG_CS, ce = FG_CE, color = state.fg, kind = "fg_status" }
-  swatches[#swatches + 1] = { row = 0, cs = BG_CS, ce = BG_CE, color = state.bg, kind = "bg_status" }
+  swatches[#swatches + 1] = { row = 0, cs = FG_CS, ce = FG_CS + SWATCH_W, color = state.fg, kind = "fg_status" }
+  swatches[#swatches + 1] = { row = 1, cs = FG_CS, ce = FG_CS + SWATCH_W, color = state.bg, kind = "bg_status" }
 
   -- Row 1 colors (palette line 0)
   for i = 1, 14 do
