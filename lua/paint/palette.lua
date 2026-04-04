@@ -8,105 +8,60 @@ M.HEIGHT             = 2
 -- 28 MS Paint-style colors: 14 per row.
 -- Row 1: primary/mid tones.  Row 2: lighter/darker variants.
 local PALETTE_COLORS = {
-  -- Row 1 (indices 1-14)
-  "#000000", "#FFFFFF", "#7F7F7F", "#C3C3C3",
-  "#880015", "#ED1C24", "#FF7F27", "#FFF200",
-  "#22B14C", "#00A2E8", "#3F48CC", "#A349A4",
-  "#B97A57", "#FFAEC9",
-  -- Row 2 (indices 15-28)
-  "#1F1F1F", "#EFEFEF", "#4C4C4C", "#9A9A9A",
-  "#9C0007", "#FF6A6A", "#FFC680", "#FFFC9E",
-  "#5FBF5F", "#99D9EA", "#7092BE", "#C879C8",
-  "#D4A574", "#FFD7E7",
+  "#000000", "#FFFFFF", "#7F7F7F", "#C3C3C3", "#880015", "#ED1C24", "#FF7F27", "#FFF200", "#22B14C", "#00A2E8", "#3F48CC", "#A349A4", "#B97A57", "#FFAEC9",
+  "#1F1F1F", "#EFEFEF", "#4C4C4C", "#9A9A9A", "#9C0007", "#FF6A6A", "#FFC680", "#FFFC9E", "#5FBF5F", "#99D9EA", "#7092BE", "#C879C8", "#D4A574", "#FFD7E7",
 }
 
--- Layout constants (all byte-based; everything before the color swatches is ASCII)
---
--- FG:XX  [color 1..14 × 2 chars]  Char:X PEN↓ | <f>g <Pf>pick-fg <p>encil <Spc>pen  <c>har
--- BG:XX  [color 1..14 × 2 chars]  Tool:pencil | <b>g <Pg>pick-bg <e>raser <Esc>lift
-
-local SWATCH_W       = 2 -- bytes per color swatch (two spaces)
-local FG_CS          = 3
-local CLR_START      = 7 -- byte offset where color swatches begin (both rows)
-
---- Build the 2 palette lines and swatch geometry list.
---- Returns lines (string[]) and swatches ({row,cs,ce,color,kind}[]).
-local function build_palette(state)
-  local lines             = {}
-  local swatches          = {}
-
-  -- Status values
-  local pen_str           = state.pen_down and "PEN!" or "    "
-
-  -- 14-color swatch strings (two spaces per color = 28 bytes of spaces per row)
-  local swatches_row      = string.rep("  ", 14)
-
-  lines[1]                = string.format(
-    "FG:%s  %s  Char:%s %s | <f>g <Pf>pick-fg <p>encil <Spc>pen  <c>har",
-    "  ", swatches_row, state.char, pen_str
-  )
-  lines[2]                = string.format(
-    "BG:%s  %s  Tool:%s | <b>g <Pg>pick-bg <e>raser <Esc>lift",
-    "  ", swatches_row, string.format("%-6s", state.tool)
-  )
-
-  -- Swatch geometry ─────────────────────────────────────────────────────────
-
-  -- FG/BG status swatches
-  swatches[#swatches + 1] = { row = 0, cs = FG_CS, ce = FG_CS + SWATCH_W, color = state.fg, kind = "fg_status" }
-  swatches[#swatches + 1] = { row = 1, cs = FG_CS, ce = FG_CS + SWATCH_W, color = state.bg, kind = "bg_status" }
-
-  -- Row 1 colors (palette line 0)
-  for i = 1, 14 do
-    local cs = CLR_START + (i - 1) * SWATCH_W
-    swatches[#swatches + 1] = {
-      row = 0,
-      cs = cs,
-      ce = cs + SWATCH_W,
-      color = PALETTE_COLORS[i],
-      kind = "swatch",
-    }
-  end
-
-  -- Row 2 colors (palette line 1)
-  for i = 1, 14 do
-    local cs = CLR_START + (i - 1) * SWATCH_W
-    swatches[#swatches + 1] = {
-      row = 1,
-      cs = cs,
-      ce = cs + SWATCH_W,
-      color = PALETTE_COLORS[14 + i],
-      kind = "swatch",
-    }
-  end
-
-  return lines, swatches
-end
-
---- Render the palette buffer with text and highlight extmarks.
+-- Char:X PEN↓  FG:XX  [color 1..14 × 2 chars] | <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har
+-- Tool:pencil  BG:XX  [color 1..14 × 2 chars] | <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill
 function M.render(state)
-  local buf = state.palette_buf
-  local ns  = state.ns_palette
+  local buf          = state.palette_buf
+  local ns           = state.ns_palette
+  local swatch_w     = 2
+  local lines        = {
+    string.format(
+      "Char:%s %s  FG:%s  %s | <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har",
+      state.char, state.pen_down and "PEN↓" or "    ", "FF", string.rep("SS", 14)
+    ),
+    string.format(
+      "Tool:%s  BG:%s  %s | <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill",
+      string.format("%-6s", state.tool), "BB", string.rep("SS", 14)
+    )
+  }
 
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-
-  local lines, swatches = build_palette(state)
-
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
-  for _, sw in ipairs(swatches) do
-    local hl_name
-    if sw.kind == "fg_status" then
-      hl_name = highlight.ensure_hl(state.fg, state.fg)
-    elseif sw.kind == "bg_status" then
-      hl_name = highlight.ensure_hl(state.bg, state.bg)
-    else
-      -- Both fg and bg of the swatch cell = the swatch color (solid block)
-      hl_name = highlight.ensure_hl(sw.color, sw.color)
-    end
-    vim.api.nvim_buf_set_extmark(buf, ns, sw.row, sw.cs, {
-      end_col  = sw.ce,
-      hl_group = hl_name,
+  -- FG/BG status swatches
+  local FG_CS = string.find(lines[1], "FF") - 1
+  vim.api.nvim_buf_set_extmark(buf, ns, 0, FG_CS, {
+    end_col  = FG_CS + swatch_w,
+    hl_group = highlight.ensure_hl(state.fg, state.fg),
+    priority = 100,
+  })
+
+  local BG_CS = string.find(lines[2], "BB") - 1
+  vim.api.nvim_buf_set_extmark(buf, ns, 1, BG_CS, {
+    end_col  = BG_CS + swatch_w,
+    hl_group = highlight.ensure_hl(state.bg, state.bg),
+    priority = 100,
+  })
+
+  -- swatches
+  local CLR_START_1 = string.find(lines[1], "SS") - 1
+  local CLR_START_2 = string.find(lines[2], "SS") - 1
+  for i = 1, 14 do
+    local cs1 = CLR_START_1 + (i - 1) * swatch_w
+    vim.api.nvim_buf_set_extmark(buf, ns, 0, cs1, {
+      end_col  = cs1 + swatch_w,
+      hl_group = highlight.ensure_hl(PALETTE_COLORS[i], PALETTE_COLORS[i]),
+      priority = 100,
+    })
+
+    local cs2 = CLR_START_2 + (i - 1) * swatch_w
+    vim.api.nvim_buf_set_extmark(buf, ns, 1, cs2, {
+      end_col  = cs2 + swatch_w,
+      hl_group = highlight.ensure_hl(PALETTE_COLORS[14 + i], PALETTE_COLORS[14 + i]),
       priority = 100,
     })
   end
