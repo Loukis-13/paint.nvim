@@ -155,6 +155,11 @@ function M.register_keymaps(state)
     palette.render(state)
   end, o)
 
+  vim.keymap.set("n", "F", function()
+    state.tool = "fill"
+    palette.render(state)
+  end, o)
+
   vim.keymap.set("n", "f", function()
     vim.ui.input({ prompt = "FG color #(RRGGBB): " }, function(input)
       local c = highlight.parse_color(input)
