@@ -8,45 +8,23 @@ local function to_rgb(hex)
          tonumber(hex:sub(5, 6), 16)
 end
 
---- Save the canvas in the native JSON format (.paint).
---- Format: { version=1, rows, cols, cells=[{r,c,ch,fg,bg}, ...] }
---- fg/bg are stored as-is (number 0-15 or "#RRGGBB" string).
+--- Save the canvas in the JSON format.
 --- @param state table
 --- @param path  string
 --- @return boolean
-function M.save_paint(state, path)
-  local cells_arr = {}
-  for r, row_cells in pairs(state.cells) do
-    for c, cell in pairs(row_cells) do
-      cells_arr[#cells_arr + 1] = {
-        r  = r,
-        c  = c,
-        ch = cell.char,
-        fg = cell.fg,
-        bg = cell.bg,
-      }
-    end
-  end
-
-  local data = {
-    version = 1,
-    rows    = state.canvas_rows,
-    cols    = state.canvas_cols,
-    cells   = cells_arr,
-  }
-
-  local ok, encoded = pcall(vim.fn.json_encode, data)
-  if not ok then
-    vim.notify("paint: failed to encode JSON: " .. tostring(encoded), vim.log.levels.ERROR)
-    return false
-  end
+function M.save_json(state, path)
+  local json = vim.json.encode({
+    rows  = state.canvas_rows,
+    cols  = state.canvas_cols,
+    cells = state.cells,
+  })
 
   local f, err = io.open(path, "w")
   if not f then
     vim.notify("paint: cannot write " .. path .. ": " .. tostring(err), vim.log.levels.ERROR)
     return false
   end
-  f:write(encoded)
+  f:write(json)
   f:close()
   vim.notify("paint: saved " .. path, vim.log.levels.INFO)
   return true
@@ -113,6 +91,27 @@ function M.save_ansi(state, path)
   f:close()
   vim.notify("paint: saved " .. path, vim.log.levels.INFO)
   return true
+end
+
+--- Load a canvas from a JSON file.
+--- @param path string
+--- @return table|nil  { cells, rows, cols } or nil on error
+function M.load_json(path)
+  local f, err = io.open(path, "r")
+  if not f then
+    vim.notify("paint: cannot read " .. path .. ": " .. tostring(err), vim.log.levels.ERROR)
+    return nil
+  end
+  local content = f:read("*a")
+  f:close()
+
+  local ok, data = pcall(vim.json.decode, content, { luanil = { object = true, array = true } })
+  if not ok or type(data) ~= "table" then
+    vim.notify("paint: failed to parse " .. path, vim.log.levels.ERROR)
+    return nil
+  end
+
+  return data
 end
 
 return M

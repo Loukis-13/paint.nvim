@@ -3,6 +3,23 @@ local M = {}
 --- Create a fresh plugin state table.
 --- @return table
 function M.new(opts)
+  local cells = opts.cells or {}
+  local rows = opts.rows or 40
+  local cols = opts.cols or 120
+
+  if next(cells) == nil then
+    for row = 1, rows do
+      cells[row] = {}
+      for col = 1, cols do
+        cells[row][col] = {
+          fg = "#FFFFFF",
+          bg = "#FFFFFF",
+          char = " ",
+        }
+      end
+    end
+  end
+
   return {
     -- buffer / window handles (set by layout.lua)
     canvas_buf  = nil,
@@ -15,17 +32,16 @@ function M.new(opts)
     ns_palette  = nil,
 
     -- canvas dimensions
-    canvas_rows = opts.rows or 40,
-    canvas_cols = opts.cols or 120,
+    canvas_rows = rows,
+    canvas_cols = cols,
 
-    -- sparse cell grid: cells[row][col] = { char, fg, bg }
-    -- row/col are 1-indexed to match Neovim buffer lines
-    cells       = {},
+    -- cells[row][col] = { char, fg, bg }
+    cells       = cells,
 
     -- current drawing state
     tool        = "pencil",
-    fg          = "#FFFFFF",
-    bg          = "#000000",
+    fg          = "#000000",
+    bg          = "#FFFFFF",
     char        = "█",
 
     -- keyboard pen state: true = pen down, arrows draw; false = arrows only move

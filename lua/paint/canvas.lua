@@ -203,16 +203,16 @@ function M.register_keymaps(state)
     end
   end, o)
 
-  -- Save: prompt for filename; dispatch on extension (.ansi vs .paint default)
+  -- Save: prompt for filename; dispatch on extension (.ansi vs .json default)
   vim.keymap.set("n", "w", function()
-    vim.ui.input({ prompt = "Save to (.paint / .ansi): " }, function(path)
+    vim.ui.input({ prompt = "Save to (.json / .ansi): " }, function(path)
       if not path or path == "" then return end
       local save = require("paint.save")
       if path:match("%.ansi$") then
         save.save_ansi(state, path)
       else
-        if not path:match("%.paint$") then path = path .. ".paint" end
-        save.save_paint(state, path)
+        if not path:match("%.json$") then path = path .. ".json" end
+        save.save_json(state, path)
       end
     end)
   end, o)

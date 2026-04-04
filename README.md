@@ -4,8 +4,7 @@ Painting tool plugin for neovim inspired in MS Paint and Durdraw
 ## Features
 - [x] Keyboard drawing
 - [x] Mouse drawing
-- [x] Save
-- [ ] Load
+- [x] Save/Load
 - [ ] Undo/Redo
 - [ ] Shapes
   - [ ] Square
