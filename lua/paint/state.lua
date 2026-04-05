@@ -49,6 +49,9 @@ function M.new(opts)
 
     -- re-entrancy guard for render()
     rendering   = false,
+
+    -- chars for the select prompt
+    char_list   = opts.char_list
   }
 end
 

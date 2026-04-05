@@ -7,6 +7,7 @@ Painting tool plugin for neovim inspired in MS Paint and Durdraw
 - [x] Save/Load
 - [ ] Undo/Redo
 - [ ] Shapes
+  - [ ] Line
   - [ ] Square
   - [ ] Circle
   - [ ] Triangle
@@ -18,3 +19,4 @@ Painting tool plugin for neovim inspired in MS Paint and Durdraw
   - [ ] Text
   - [ ] Color picker
 - [x] User command arguments
+- [x] Choose pencil type / Char list

@@ -1,6 +1,7 @@
 local M              = {}
 
 local highlight      = require("paint.highlight")
+local tools          = require("paint.tools")
 
 -- Height of the palette panel (2 rows: one per color row)
 M.HEIGHT             = 2
@@ -12,19 +13,19 @@ local PALETTE_COLORS = {
   "#1F1F1F", "#EFEFEF", "#4C4C4C", "#9A9A9A", "#9C0007", "#FF6A6A", "#FFC680", "#FFFC9E", "#5FBF5F", "#99D9EA", "#7092BE", "#C879C8", "#D4A574", "#FFD7E7",
 }
 
--- Char:X PEN↓  FG:XX  [color 1..14 × 2 chars] | <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har
--- Tool:pencil  BG:XX  [color 1..14 × 2 chars] | <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill
+-- Char:X PEN↓  FG:XX  |[color 1..14 × 2 chars]| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har
+-- Tool:pencil  BG:XX  |[color 1..14 × 2 chars]| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill
 function M.render(state)
   local buf          = state.palette_buf
   local ns           = state.ns_palette
   local swatch_w     = 2
   local lines        = {
     string.format(
-      "Char:%s %s  FG:%s  %s | <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har",
+      "Char:%s %s  FG:%s  |%s| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select",
       state.char, state.pen_down and "PEN↓" or "    ", "FF", string.rep("SS", 14)
     ),
     string.format(
-      "Tool:%s  BG:%s  %s | <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill",
+      "Tool:%s  BG:%s  |%s| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill",
       string.format("%-6s", state.tool), "BB", string.rep("SS", 14)
     )
   }
@@ -107,6 +108,11 @@ function M.register_keymaps(state)
       state.bg = hl.bg
       M.render(state)
     end
+  end, o)
+
+  vim.keymap.set("n", "C", function()
+    tools.select_char(state)
+    M.render(state)
   end, o)
 end
 
