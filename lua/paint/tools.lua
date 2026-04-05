@@ -41,17 +41,38 @@ function M.fill(state, row, col)
   if target.char == state.char and target.fg == state.fg and target.bg == state.bg then
     return
   end
-  M.pencil(state, row, col)
 
-  local neighbors = { { row - 1, col }, { row + 1, col }, { row, col - 1 }, { row, col + 1 } }
-  for _, nb in ipairs(neighbors) do
-    local nr, nc = nb[1], nb[2]
-    if nr >= 1 and nr <= state.canvas_rows and nc >= 1 and nc <= state.canvas_cols then
-      local cell = state.cells[nr][nc]
-      if vim.deep_equal(target, cell) then
-        M.fill(state, nr, nc)
-      end
+  local visited = {}
+  local queue = { { row, col } }
+
+  while #queue > 0 do
+    local current = table.remove(queue, 1)
+    local r, c = current[1], current[2]
+
+    if visited[r] and visited[r][c] then
+      goto continue
     end
+
+    if r < 1 or r > state.canvas_rows or c < 1 or c > state.canvas_cols then
+      goto continue
+    end
+
+    local cell = state.cells[r][c]
+    if not vim.deep_equal(target, cell) then
+      goto continue
+    end
+
+    visited[r] = visited[r] or {}
+    visited[r][c] = true
+
+    M.pencil(state, r, c)
+
+    queue[#queue + 1] = { r - 1, c }
+    queue[#queue + 1] = { r + 1, c }
+    queue[#queue + 1] = { r, c - 1 }
+    queue[#queue + 1] = { r, c + 1 }
+
+    ::continue::
   end
 
   state.pen_down = false -- prevent arrow keys from drawing after fill completes
