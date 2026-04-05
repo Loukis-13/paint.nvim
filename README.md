@@ -8,7 +8,7 @@ Painting tool plugin for neovim inspired in MS Paint and Durdraw
 - [ ] Undo/Redo
 - [ ] Shapes
   - [x] Line
-  - [ ] Square
+  - [x] Square
   - [ ] Circle
   - [ ] Triangle
 - [ ] Tools

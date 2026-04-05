@@ -254,6 +254,11 @@ function M.register_keymaps(state)
     palette.render(state)
   end, o)
 
+  vim.keymap.set("n", "s", function()
+    tools.shape.select(state)
+    palette.render(state)
+  end, o)
+
   -- Save: prompt for filename; dispatch on extension (.ansi vs .json default)
   vim.keymap.set("n", "w", function()
     vim.ui.input({ prompt = "Save to (.json / .ansi): " }, function(path)

@@ -1,5 +1,6 @@
 local M = { shape = {} }
 
+-- ── Tools ────────────────────────────────────────────────────────────────
 --- Dispatch to the current tool.
 function M.apply(state, row, col)
   if row < 1 or row > state.canvas_rows then return end
@@ -56,12 +57,16 @@ function M.fill(state, row, col)
   state.pen_down = false -- prevent arrow keys from drawing after fill completes
 end
 
+-- ── Shapes ────────────────────────────────────────────────────────────────
 function M.shape.apply(state, cell_start, cell_end)
   if state.shape == "line" then
     M.shape.line(state, cell_start, cell_end)
+  elseif state.shape == "rectangle" then
+    M.shape.rectangle(state, cell_start, cell_end)
   end
 end
 
+-- Draw a straight line from cel_start to cel_end using Bresenham's algorithm.
 function M.shape.line(state, cel_start, cel_end)
   local r1, c1 = cel_start.row, cel_start.col
   local r2, c2 = cel_end.row, cel_end.col
@@ -89,6 +94,36 @@ function M.shape.line(state, cel_start, cel_end)
   end
 end
 
+-- Draw a rectangle defined by cell_start and cell_end.
+function M.shape.rectangle(state, cell_start, cell_end)
+  local r1, c1 = cell_start.row, cell_start.col
+  local r2, c2 = cell_end.row, cell_end.col
+
+  for c = math.min(c1, c2), math.max(c1, c2) do
+    M.pencil(state, r1, c)
+    M.pencil(state, r2, c)
+  end
+  for r = math.min(r1, r2), math.max(r1, r2) do
+    M.pencil(state, r, c1)
+    M.pencil(state, r, c2)
+  end
+end
+
+-- Shape selection
+function M.shape.select(state)
+  vim.ui.select({
+      "line",
+      "rectangle"
+    },
+    {},
+    function(choice)
+      if choice then
+        state.shape = choice
+      end
+    end)
+end
+
+-- ── Select options ────────────────────────────────────────────────────────────────
 -- Unicode char selection.
 function M.select_char(state)
   vim.ui.select(state.char_list or {

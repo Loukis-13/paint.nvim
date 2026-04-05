@@ -13,20 +13,24 @@ local PALETTE_COLORS = {
   "#1F1F1F", "#EFEFEF", "#4C4C4C", "#9A9A9A", "#9C0007", "#FF6A6A", "#FFC680", "#FFFC9E", "#5FBF5F", "#99D9EA", "#7092BE", "#C879C8", "#D4A574", "#FFD7E7",
 }
 
--- Char:X PEN↓  FG:XX  |[color 1..14 × 2 chars]| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har
--- Tool:pencil  BG:XX  |[color 1..14 × 2 chars]| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill
+-- Char  Tool   Shape FG BG |[color 1..14 × 2 chars]| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select
+--  X   pencil↓ rect  XX XX |[color 1..14 × 2 chars]| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill <s>hape
 function M.render(state)
-  local buf          = state.palette_buf
-  local ns           = state.ns_palette
-  local swatch_w     = 2
-  local lines        = {
+  local buf      = state.palette_buf
+  local ns       = state.ns_palette
+  local swatch_w = 2
+  local lines    = {
     string.format(
-      "Char:%s %s  FG:%s  |%s| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select",
-      state.char, state.pen_down and "PEN↓" or "    ", "FF", string.rep("SS", 14)
+      "Char  Tool   Shape FG BG |%s| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select",
+      string.rep("SS", 14)
     ),
     string.format(
-      "Tool:%s  BG:%s  |%s| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill",
-      string.format("%-6s", state.tool), "BB", string.rep("SS", 14)
+      " %s   %s%s %s  FF BB |%s| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill <s>hape",
+      state.char,
+      string.format("%-6s", state.tool):sub(1, 6),
+      state.pen_down and "↓" or " ",
+      string.format("%-4s", state.shape):sub(1, 4),
+      string.rep("SS", 14)
     )
   }
 
@@ -34,8 +38,8 @@ function M.render(state)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
   -- FG/BG status swatches
-  local FG_CS = string.find(lines[1], "FF") - 1
-  vim.api.nvim_buf_set_extmark(buf, ns, 0, FG_CS, {
+  local FG_CS = string.find(lines[2], "FF") - 1
+  vim.api.nvim_buf_set_extmark(buf, ns, 1, FG_CS, {
     end_col  = FG_CS + swatch_w,
     hl_group = highlight.ensure_hl(state.fg, state.fg),
     priority = 100,
@@ -112,6 +116,11 @@ function M.register_keymaps(state)
 
   vim.keymap.set("n", "C", function()
     tools.select_char(state)
+    M.render(state)
+  end, o)
+
+  vim.keymap.set("n", "s", function()
+    tools.shape.select(state)
     M.render(state)
   end, o)
 end
