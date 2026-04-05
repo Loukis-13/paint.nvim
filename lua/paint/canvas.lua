@@ -103,11 +103,31 @@ function M.register_keymaps(state)
 
   -- ── Mouse ────────────────────────────────────────────────────────────────
   vim.keymap.set("n", "<LeftMouse>", function()
-    draw_at_mouse()
+    local pos = vim.fn.getmousepos()
+    if pos.winid == state.palette_win then
+      local hl = highlight.get_highlight(state.palette_buf, pos.line - 1, pos.column - 1)
+      if hl then
+        state.fg = hl.fg
+        palette.render(state)
+      end
+    else
+      draw_at_mouse()
+    end
   end, o)
 
   vim.keymap.set("n", "<LeftDrag>", function()
     draw_at_mouse()
+  end, o)
+
+  vim.keymap.set("n", "<RightMouse>", function()
+    local pos = vim.fn.getmousepos()
+    if pos.winid == state.palette_win then
+      local hl = highlight.get_highlight(state.palette_buf, pos.line - 1, pos.column - 1)
+      if hl then
+        state.bg = hl.bg
+        palette.render(state)
+      end
+    end
   end, o)
 
   -- ── Keyboard ─────────────────────────────────────────────────────────────

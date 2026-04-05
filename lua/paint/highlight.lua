@@ -35,11 +35,12 @@ function M.ensure_hl(fg, bg)
 end
 
 --- Get the fg/bg colors of the cell at cursor or given position by inspecting extmarks.
+--- @param buf number|nil buffer number (default: current buffer)
 --- @param row number|nil (0-based)
 --- @param col number|nil (0-based)
 --- @return table|nil { fg = "#RRGGBB", bg = "#RRGGBB" } or nil if no cell highlight found
-function M.get_highlight(row, col)
-  local extmark = vim.inspect_pos(nil, row, col).extmarks[1]
+function M.get_highlight(buf, row, col)
+  local extmark = vim.inspect_pos(buf, row, col).extmarks[1]
 
   if extmark then
     local hl = vim.api.nvim_get_hl(0, { name = extmark.opts.hl_group })

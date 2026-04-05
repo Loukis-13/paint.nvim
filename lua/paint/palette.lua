@@ -79,7 +79,7 @@ function M.register_keymaps(state)
 
   vim.keymap.set("n", "<LeftMouse>", function()
     local pos = vim.fn.getmousepos()
-    local hl = highlight.get_highlight(pos.line - 1, pos.column - 1)
+    local hl = highlight.get_highlight(nil, pos.line - 1, pos.column - 1)
     if hl then
       state.fg = hl.fg
       M.render(state)
@@ -88,7 +88,7 @@ function M.register_keymaps(state)
 
   vim.keymap.set("n", "<RightMouse>", function()
     local pos = vim.fn.getmousepos()
-    local hl = highlight.get_highlight(pos.line - 1, pos.column - 1)
+    local hl = highlight.get_highlight(nil, pos.line - 1, pos.column - 1)
     if hl then
       state.bg = hl.bg
       M.render(state)
