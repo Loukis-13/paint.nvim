@@ -75,11 +75,16 @@ end
 
 --- Register all canvas buffer keymaps.
 function M.register_keymaps(state)
-  local tools     = require("paint.tools")
-  local palette   = require("paint.palette")
-  local highlight = require("paint.highlight")
-  local buf       = state.canvas_buf
-  local o         = { noremap = true, silent = true, buffer = buf }
+  local tools   = require("paint.tools")
+  local palette = require("paint.palette")
+  local buf     = state.canvas_buf
+  local o       = { noremap = true, silent = true, buffer = buf }
+
+  local function get_pos(mark)
+    mark = mark or "."
+    local pos = vim.fn.getcharpos(mark)
+    return { row = pos[2], col = pos[3] }
+  end
 
   local function draw_at(row, col)
     tools.apply(state, row, col)
@@ -105,28 +110,11 @@ function M.register_keymaps(state)
     draw_at_mouse()
   end, o)
 
-  -- ── Block insert-mode entry ───────────────────────────────────────────────
+  -- ── Keyboard ─────────────────────────────────────────────────────────────
+  -- Block insert-mode entry
   for _, k in ipairs({ "i", "I", "a", "A", "o", "O", "s", "S", "r", "R" }) do
     vim.keymap.set("n", k, "<Nop>", o)
   end
-
-  vim.api.nvim_create_autocmd("CursorMoved", {
-    buffer = buf,
-    callback = function()
-      local pos = vim.fn.getcursorcharpos()
-      local row = math.min(pos[2], state.canvas_rows) -- clamp to avoid invalid line index
-      local col = math.min(pos[3], state.canvas_cols) -- clamp to avoid invalid byte offset
-
-      vim.fn.setcharpos(".", { 0, row, col, 0 })      -- prevent cursor from moving to invalid byte offset
-
-      if state.pen_down then draw_at(row, col) end
-    end,
-  })
-
-  vim.keymap.set("n", "<PageUp>", "gg", o)
-  vim.keymap.set("n", "<PageDown>", "G", o)
-  vim.keymap.set("n", "<D-Up>", "gg", o)
-  vim.keymap.set("n", "<D-Down>", "G", o)
 
   -- Space: pen down → draw at current cell position.
   vim.keymap.set("n", "<Space>", function()
@@ -143,6 +131,59 @@ function M.register_keymaps(state)
       palette.render(state)
     end
   end, o)
+
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    buffer = buf,
+    callback = function()
+      local pos = vim.fn.getcursorcharpos()
+      local row = math.min(pos[2], state.canvas_rows) -- clamp to avoid invalid line index
+      local col = math.min(pos[3], state.canvas_cols) -- clamp to avoid invalid char index
+
+      vim.fn.setcharpos(".", { 0, row, col, 0 })      -- prevent cursor from moving to invalid char offset
+
+      if state.pen_down then draw_at(row, col) end
+    end,
+  })
+
+  -- Draw straight lines with PgUp/PgDown/Home/End.
+  vim.keymap.set("n", "<PageUp>", function()
+    local pos = get_pos()
+    tools.line(state, { pos.row, pos.col }, { 1, pos.col })
+    M.render(state)
+    vim.fn.setcursorcharpos(1, pos.col)
+  end, o)
+  vim.keymap.set("n", "<PageDown>", function()
+    local pos = get_pos()
+    tools.line(state, { pos.row, pos.col }, { state.canvas_rows, pos.col })
+    M.render(state)
+    vim.fn.setcursorcharpos(state.canvas_rows, pos.col)
+  end, o)
+  vim.keymap.set("n", "<Home>", function()
+    local pos = get_pos()
+    tools.line(state, { pos.row, pos.col }, { pos.row, 1 })
+    M.render(state)
+    vim.fn.setcursorcharpos(pos.row, 1)
+  end, o)
+  vim.keymap.set("n", "<End>", function()
+    local pos = get_pos()
+    tools.line(state, { pos.row, pos.col }, { pos.row, state.canvas_cols })
+    M.render(state)
+    vim.fn.setcursorcharpos(pos.row, state.canvas_cols)
+  end, o)
+  vim.keymap.set("n", "<D-Up>", "<PageUp>", { buffer = buf, remap = true })
+  vim.keymap.set("n", "<D-Down>", "<PageDown>", { buffer = buf, remap = true })
+  vim.keymap.set("n", "<D-Left>", "<Home>", { buffer = buf, remap = true })
+  vim.keymap.set("n", "<D-Right>", "<End>", { buffer = buf, remap = true })
+
+  -- Shapes drawing with visual blocks
+  vim.api.nvim_create_autocmd("ModeChanged", {
+    -- buffer = buf,
+    pattern = "\x16:n", -- V-BLOCK to NORMAL
+    callback = function()
+      tools.shape.apply(state, get_pos("'<"), get_pos("'>"))
+      M.render(state)
+    end,
+  })
 
   -- ── Tool & color keymaps ─────────────────────────────────────────────────
   vim.keymap.set("n", "p", function()

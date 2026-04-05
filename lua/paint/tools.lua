@@ -1,4 +1,4 @@
-local M = {}
+local M = { shape = {} }
 
 --- Dispatch to the current tool.
 function M.apply(state, row, col)
@@ -54,6 +54,39 @@ function M.fill(state, row, col)
   end
 
   state.pen_down = false -- prevent arrow keys from drawing after fill completes
+end
+
+function M.shape.apply(state, cell_start, cell_end)
+  if state.shape == "line" then
+    M.shape.line(state, cell_start, cell_end)
+  end
+end
+
+function M.shape.line(state, cel_start, cel_end)
+  local r1, c1 = cel_start.row, cel_start.col
+  local r2, c2 = cel_end.row, cel_end.col
+
+  local dr = math.abs(r2 - r1)
+  local dc = math.abs(c2 - c1)
+  local step_r = (r1 < r2) and 1 or -1
+  local step_c = (c1 < c2) and 1 or -1
+  local err = dr - dc
+
+  while true do
+    M.pencil(state, r1, c1)
+
+    if r1 == r2 and c1 == c2 then break end
+
+    local err2 = err * 2
+    if err2 > -dc then
+      err = err - dc
+      r1 = r1 + step_r
+    end
+    if err2 < dr then
+      err = err + dr
+      c1 = c1 + step_c
+    end
+  end
 end
 
 -- Unicode char selection.

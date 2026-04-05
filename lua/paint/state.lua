@@ -40,6 +40,7 @@ function M.new(opts)
 
     -- current drawing state
     tool        = "pencil",
+    shape       = "line",
     fg          = "#000000",
     bg          = "#FFFFFF",
     char        = "█",
