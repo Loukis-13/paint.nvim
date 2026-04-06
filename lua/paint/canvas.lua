@@ -168,26 +168,34 @@ function M.register_keymaps(state)
   -- Draw straight lines with PgUp/PgDown/Home/End.
   vim.keymap.set("n", "<PageUp>", function()
     local pos = get_pos()
-    tools.shape.line(state, pos, { row = 1, col = pos.col })
-    M.render(state)
+    if state.pen_down then
+      tools.shape.line(state, pos, { row = 1, col = pos.col })
+      M.render(state)
+    end
     vim.fn.setcursorcharpos(1, pos.col)
   end, o)
   vim.keymap.set("n", "<PageDown>", function()
     local pos = get_pos()
-    tools.shape.line(state, pos, { row = state.canvas_rows, col = pos.col })
-    M.render(state)
+    if state.pen_down then
+      tools.shape.line(state, pos, { row = state.canvas_rows, col = pos.col })
+      M.render(state)
+    end
     vim.fn.setcursorcharpos(state.canvas_rows, pos.col)
   end, o)
   vim.keymap.set("n", "<Home>", function()
     local pos = get_pos()
-    tools.shape.line(state, pos, { row = pos.row, col = 1 })
-    M.render(state)
+    if state.pen_down then
+      tools.shape.line(state, pos, { row = pos.row, col = 1 })
+      M.render(state)
+    end
     vim.fn.setcursorcharpos(pos.row, 1)
   end, o)
   vim.keymap.set("n", "<End>", function()
     local pos = get_pos()
-    tools.shape.line(state, pos, { row = pos.row, col = state.canvas_cols })
-    M.render(state)
+    if state.pen_down then
+      tools.shape.line(state, pos, { row = pos.row, col = state.canvas_cols })
+      M.render(state)
+    end
     vim.fn.setcursorcharpos(pos.row, state.canvas_cols)
   end, o)
   vim.keymap.set("n", "<D-Up>", "<PageUp>", { buffer = buf, remap = true })

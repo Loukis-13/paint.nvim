@@ -11,7 +11,7 @@ https://github.com/user-attachments/assets/c947b5bb-1416-4b05-b28f-4a6e6a546cb0
 - [ ] Shapes
   - [x] Line
   - [x] Square
-  - [ ] Circle
+  - [x] Circle
   - [ ] Triangle
 - [ ] Tools
   - [x] Pencil

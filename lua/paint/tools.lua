@@ -84,6 +84,8 @@ function M.shape.apply(state, cell_start, cell_end)
     M.shape.line(state, cell_start, cell_end)
   elseif state.shape == "rectangle" then
     M.shape.rectangle(state, cell_start, cell_end)
+  elseif state.shape == "ellipse" then
+    M.shape.ellipse(state, cell_start, cell_end)
   end
 end
 
@@ -130,11 +132,33 @@ function M.shape.rectangle(state, cell_start, cell_end)
   end
 end
 
+-- Draw an ellipse defined by cell_start and cell_end.
+function M.shape.ellipse(state, cell_start, cell_end)
+  local r1, c1 = cell_start.row, cell_start.col
+  local r2, c2 = cell_end.row, cell_end.col
+
+  local center_r = (r1 + r2) / 2
+  local center_c = (c1 + c2) / 2
+
+  local radius_r = math.abs(r2 - r1) / 2
+  local radius_c = math.abs(c2 - c1) / 2
+
+  local steps = math.ceil(2 * math.pi * math.sqrt((radius_r^2 + radius_c^2) / 2))
+
+  for i = 0, steps - 1 do
+    local angle = (i / steps) * 2 * math.pi
+    local r = math.floor(center_r + radius_r * math.sin(angle) + 0.5)
+    local c = math.floor(center_c + radius_c * math.cos(angle) + 0.5)
+    M.pencil(state, r, c)
+  end
+end
+
 -- Shape selection
 function M.shape.select(state)
   vim.ui.select({
       "line",
-      "rectangle"
+      "rectangle",
+      "ellipse",
     },
     {},
     function(choice)
