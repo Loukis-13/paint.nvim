@@ -8,11 +8,11 @@ https://github.com/user-attachments/assets/c947b5bb-1416-4b05-b28f-4a6e6a546cb0
 - [x] Mouse drawing
 - [x] Save/Load
 - [ ] Undo/Redo
-- [ ] Shapes
+- [x] Shapes
   - [x] Line
   - [x] Square
   - [x] Circle
-  - [ ] Triangle
+  - [x] Triangle
 - [ ] Tools
   - [x] Pencil
   - [x] Eraser

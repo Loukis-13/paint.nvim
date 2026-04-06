@@ -86,6 +86,8 @@ function M.shape.apply(state, cell_start, cell_end)
     M.shape.rectangle(state, cell_start, cell_end)
   elseif state.shape == "ellipse" then
     M.shape.ellipse(state, cell_start, cell_end)
+  elseif state.shape == "triangle" then
+    M.shape.triangle(state, cell_start, cell_end)
   end
 end
 
@@ -143,7 +145,7 @@ function M.shape.ellipse(state, cell_start, cell_end)
   local radius_r = math.abs(r2 - r1) / 2
   local radius_c = math.abs(c2 - c1) / 2
 
-  local steps = math.ceil(2 * math.pi * math.sqrt((radius_r^2 + radius_c^2) / 2))
+  local steps = math.ceil(2 * math.pi * math.sqrt((radius_r ^ 2 + radius_c ^ 2) / 2))
 
   for i = 0, steps - 1 do
     local angle = (i / steps) * 2 * math.pi
@@ -153,12 +155,27 @@ function M.shape.ellipse(state, cell_start, cell_end)
   end
 end
 
+-- Draw a triagle defined by cell_start and cell_end.
+function M.shape.triangle(state, cell_start, cell_end)
+  local r1, c1 = cell_start.row, cell_start.col
+  local r2, c2 = cell_end.row, cell_end.col
+
+  local p1 = { row = r2, col = c1 }
+  local p2 = { row = r2, col = c2 }
+  local p3 = { row = r1, col = (c1 + c2) / 2 }
+
+  M.shape.line(state, p1, p2)
+  M.shape.line(state, p1, p3)
+  M.shape.line(state, p2, p3)
+end
+
 -- Shape selection
 function M.shape.select(state)
   vim.ui.select({
       "line",
       "rectangle",
       "ellipse",
+      "triangle"
     },
     {},
     function(choice)
