@@ -95,32 +95,32 @@ nvim +"Paint load file.json"
 ```
 
 ### Keyboard commands
-**<Space>** - tool down (begin to draw/erase)
-**<Esc>** - tool up (stops drawing/erasing)
-**p** - pencil
-**e** - eraser
-**f** - type foreground color in #RRGGBB format
-**b** - type background color in #RRGGBB format
-**Pf** - pick foreground color under cursor as the current foreground color
-**Pb** - pick background color under cursor as the current background color
-**c** - type char to be used for drawing
-**C** - select pre-defined char from list
-**F** - fill area under cursor with selected colors
-**s** - select shape to draw.
-**w** - Save to file (.json/.ansi)
+**\<Space\>** - tool down (begin to draw/erase)  
+**\<Esc\>** - tool up (stops drawing/erasing)  
+**p** - pencil  
+**e** - eraser  
+**f** - type foreground color in #RRGGBB format  
+**b** - type background color in #RRGGBB format  
+**Pf** - pick foreground color under cursor as the current foreground color  
+**Pb** - pick background color under cursor as the current background color  
+**c** - type char to be used for drawing  
+**C** - select pre-defined char from list  
+**F** - fill area under cursor with selected colors  
+**s** - select shape to draw.  
+**w** - Save to file (.json/.ansi)  
 
 To draw a shape:
-- enter `V-BLOCK` mode (<C-v> or <C-q>),
+- enter `V-BLOCK` mode (\<C-v\> or \<C-q\>),
 - select the area of the shape,
-- return to normal mode (<Esc>).
+- return to normal mode (\<Esc\>).
 
 ### Mouse commands
 #### On palette
-**<LeftMouse>** - pick foreground color
-**<RightMouse>** - pick background color
+**\<LeftMouse\>** - pick foreground color  
+**\<RightMouse\>** - pick background color  
 
 #### On canvas
-**<LeftMouse>/<LeftDrag>** - Draw
+**\<LeftMouse\>/\<LeftDrag\>** - Draw  
 
 ## Support
 Toss me a coin if you liked what I did.  
