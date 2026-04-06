@@ -29,7 +29,7 @@ If you want a new feature or find a bug, please open an issue.
 ### [lazy.nvim](https://github.com/folke/lazy.nvim)
 ```lua
 {
-    "Loukis/paint.nvim",
+    "Loukis-13/paint.nvim",
     opts = {}
 }
 ```
