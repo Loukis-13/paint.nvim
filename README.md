@@ -107,6 +107,7 @@ nvim +"Paint load file.json"
 **C** - select pre-defined char from list
 **F** - fill area under cursor with selected colors
 **s** - select shape to draw.
+**w** - Save to file (.json/.ansi)
 
 To draw a shape:
 - enter `V-BLOCK` mode (<C-v> or <C-q>),

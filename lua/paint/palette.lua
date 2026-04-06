@@ -13,7 +13,7 @@ local PALETTE_COLORS = {
   "#1F1F1F", "#EFEFEF", "#4C4C4C", "#9A9A9A", "#9C0007", "#FF6A6A", "#FFC680", "#FFFC9E", "#5FBF5F", "#99D9EA", "#7092BE", "#C879C8", "#D4A574", "#FFD7E7",
 }
 
--- Char  Tool   Shape FG BG |[color 1..14 × 2 chars]| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select
+-- Char  Tool   Shape FG BG |[color 1..14 × 2 chars]| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select <w>rite(save)
 --  X   pencil↓ rect  XX XX |[color 1..14 × 2 chars]| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill <s>hape
 function M.render(state)
   local buf      = state.palette_buf
@@ -21,7 +21,7 @@ function M.render(state)
   local swatch_w = 2
   local lines    = {
     string.format(
-      "Char  Tool   Shape FG BG |%s| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select",
+      "Char  Tool   Shape FG BG |%s| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select <w>rite(save)",
       string.rep("SS", 14)
     ),
     string.format(
