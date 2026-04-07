@@ -127,8 +127,22 @@ function M.register_keymaps(state)
         state.bg = hl.bg
         palette.render(state)
       end
+    else
+      local row = math.min(pos.winrow, state.canvas_rows) -- clamp to avoid invalid line index
+      local col = math.min(pos.wincol, state.canvas_cols) -- clamp to avoid invalid char index
+      vim.fn.setcharpos(".", { 0, row, col, 0 })
+      vim.cmd('normal! \22')
     end
   end, o)
+
+  vim.keymap.set("v", "<RightDrag>", function()
+    local pos = vim.fn.getmousepos()
+    local row = math.min(pos.winrow, state.canvas_rows) -- clamp to avoid invalid line index
+    local col = math.min(pos.wincol, state.canvas_cols) -- clamp to avoid invalid char index
+    vim.fn.setcharpos(".", { 0, row, col, 0 })
+  end, o)
+
+  vim.keymap.set("v", "<RightRelease>", "<Esc>", o)
 
   -- ── Keyboard ─────────────────────────────────────────────────────────────
   -- Block insert-mode entry

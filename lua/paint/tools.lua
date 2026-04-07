@@ -16,6 +16,9 @@ function M.apply(state, row, col)
 end
 
 --- Draw the current char+color at (row, col).
+--- @param state table The current paint state.
+--- @param row integer The row to draw at.
+--- @param col integer The column to draw at.
 function M.pencil(state, row, col)
   state.cells[row][col] = {
     char = state.char,
@@ -134,7 +137,6 @@ function M.shape.rectangle(state, cell_start, cell_end)
   end
 end
 
--- Draw an ellipse defined by cell_start and cell_end.
 function M.shape.ellipse(state, cell_start, cell_end)
   local r1, c1 = cell_start.row, cell_start.col
   local r2, c2 = cell_end.row, cell_end.col
@@ -145,13 +147,20 @@ function M.shape.ellipse(state, cell_start, cell_end)
   local radius_r = math.abs(r2 - r1) / 2
   local radius_c = math.abs(c2 - c1) / 2
 
-  local steps = math.ceil(2 * math.pi * math.sqrt((radius_r ^ 2 + radius_c ^ 2) / 2))
+  -- Scan by rows → fills horizontal parts of the curve
+  for r = math.ceil(center_r - radius_r), math.floor(center_r + radius_r) do
+    local t = (r - center_r) / radius_r
+    local c = radius_c * math.sqrt(1 - t * t)
+    M.pencil(state, r, math.floor(center_c + c + 0.5))
+    M.pencil(state, r, math.floor(center_c - c + 0.5))
+  end
 
-  for i = 0, steps - 1 do
-    local angle = (i / steps) * 2 * math.pi
-    local r = math.floor(center_r + radius_r * math.sin(angle) + 0.5)
-    local c = math.floor(center_c + radius_c * math.cos(angle) + 0.5)
-    M.pencil(state, r, c)
+  -- Scan by cols → fills vertical parts of the curve
+  for c = math.ceil(center_c - radius_c), math.floor(center_c + radius_c) do
+    local t = (c - center_c) / radius_c
+    local r = radius_r * math.sqrt(1 - t * t)
+    M.pencil(state, math.floor(center_r + r + 0.5), c)
+    M.pencil(state, math.floor(center_r - r + 0.5), c)
   end
 end
 
@@ -162,7 +171,7 @@ function M.shape.triangle(state, cell_start, cell_end)
 
   local p1 = { row = r2, col = c1 }
   local p2 = { row = r2, col = c2 }
-  local p3 = { row = r1, col = (c1 + c2) / 2 }
+  local p3 = { row = r1, col = math.floor((c1 + c2) / 2) }
 
   M.shape.line(state, p1, p2)
   M.shape.line(state, p1, p3)

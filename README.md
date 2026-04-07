@@ -121,6 +121,7 @@ To draw a shape:
 
 #### On canvas
 **\<LeftMouse\>/\<LeftDrag\>** - Draw  
+**\<RightMouse\>**/**\<RightDrag\>**/**\<RightRelease\>** - Draw Shape
 
 ## Support
 Toss me a coin if you liked what I did.  
