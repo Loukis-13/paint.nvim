@@ -1,5 +1,41 @@
 local M = { shape = {} }
 
+local HISTORY_LIMIT = 50
+
+local function deep_copy_cells(cells)
+  local copy = {}
+  for r, row in pairs(cells) do
+    copy[r] = {}
+    for c, cell in pairs(row) do
+      copy[r][c] = { char = cell.char, fg = cell.fg, bg = cell.bg }
+    end
+  end
+  return copy
+end
+
+--- Snapshot current cells onto the undo stack; clears the redo stack.
+function M.push_history(state)
+  state.history[#state.history + 1] = deep_copy_cells(state.cells)
+  if #state.history > HISTORY_LIMIT then
+    table.remove(state.history, 1)
+  end
+  state.future = {}
+end
+
+function M.undo(state)
+  if #state.history == 0 then return end
+  state.future[#state.future + 1] = deep_copy_cells(state.cells)
+  state.cells = state.history[#state.history]
+  state.history[#state.history] = nil
+end
+
+function M.redo(state)
+  if #state.future == 0 then return end
+  state.history[#state.history + 1] = deep_copy_cells(state.cells)
+  state.cells = state.future[#state.future]
+  state.future[#state.future] = nil
+end
+
 -- ── Tools ────────────────────────────────────────────────────────────────
 --- Dispatch to the current tool.
 function M.apply(state, row, col)

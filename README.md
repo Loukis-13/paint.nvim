@@ -7,7 +7,7 @@ https://github.com/user-attachments/assets/c947b5bb-1416-4b05-b28f-4a6e6a546cb0
 - [x] Keyboard drawing
 - [x] Mouse drawing
 - [x] Save/Load
-- [ ] Undo/Redo
+- [x] Undo/Redo
 - [x] Shapes
   - [x] Line
   - [x] Square
@@ -95,19 +95,21 @@ nvim +"Paint load file.json"
 ```
 
 ### Keyboard commands
-**\<Space\>** - tool down (begin to draw/erase)  
-**\<Esc\>** - tool up (stops drawing/erasing)  
-**p** - pencil  
-**e** - eraser  
-**f** - type foreground color in #RRGGBB format  
-**b** - type background color in #RRGGBB format  
-**Pf** - pick foreground color under cursor as the current foreground color  
-**Pb** - pick background color under cursor as the current background color  
-**c** - type char to be used for drawing  
-**C** - select pre-defined char from list  
-**F** - fill area under cursor with selected colors  
-**s** - select shape to draw.  
+**\<Space\>** - Tool down (begin to draw/erase)  
+**\<Esc\>** - Tool up (stops drawing/erasing)  
+**p** - Pencil  
+**e** - Eraser  
+**f** - Type foreground color in #RRGGBB format  
+**b** - Type background color in #RRGGBB format  
+**Pf** - Pick foreground color under cursor as the current foreground color  
+**Pb** - Pick background color under cursor as the current background color  
+**c** - Type char to be used for drawing  
+**C** - Select pre-defined char from list  
+**F** - Fill area under cursor with selected colors  
+**s** - Select shape to draw.  
 **w** - Save to file (.json/.ansi)  
+**u** - Undo  
+**\<C-r\>** - Redo  
 
 To draw a shape:
 - enter `V-BLOCK` mode (\<C-v\> or \<C-q\>),

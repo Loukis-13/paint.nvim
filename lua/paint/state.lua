@@ -52,7 +52,11 @@ function M.new(opts)
     rendering   = false,
 
     -- chars for the select prompt
-    char_list   = opts.char_list
+    char_list   = opts.char_list,
+
+    -- undo / redo stacks (list of cells snapshots)
+    history     = {},
+    future      = {},
   }
 end
 

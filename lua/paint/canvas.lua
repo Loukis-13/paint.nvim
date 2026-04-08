@@ -111,6 +111,7 @@ function M.register_keymaps(state)
         palette.render(state)
       end
     else
+      tools.push_history(state)
       draw_at_mouse()
     end
   end, o)
@@ -152,6 +153,7 @@ function M.register_keymaps(state)
 
   -- Space: pen down → draw at current cell position.
   vim.keymap.set("n", "<Space>", function()
+    tools.push_history(state)
     state.pen_down = true
     local pos = vim.fn.getcursorcharpos()
     draw_at(pos[2], pos[3])
@@ -222,6 +224,7 @@ function M.register_keymaps(state)
     -- buffer = buf,
     pattern = "\x16:n", -- V-BLOCK to NORMAL
     callback = function()
+      tools.push_history(state)
       tools.shape.apply(state, get_pos("'<"), get_pos("'>"))
       M.render(state)
     end,
@@ -298,6 +301,18 @@ function M.register_keymaps(state)
 
   vim.keymap.set("n", "s", function()
     tools.shape.select(state)
+    palette.render(state)
+  end, o)
+
+  vim.keymap.set("n", "u", function()
+    tools.undo(state)
+    M.render(state)
+    palette.render(state)
+  end, o)
+
+  vim.keymap.set("n", "<C-r>", function()
+    tools.redo(state)
+    M.render(state)
     palette.render(state)
   end, o)
 

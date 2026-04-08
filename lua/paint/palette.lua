@@ -14,7 +14,7 @@ local PALETTE_COLORS = {
 }
 
 -- Char  Tool   Shape FG BG |[color 1..14 × 2 chars]| <f>g <Pf>pick-fg <Spc>pen  <p>encil <c>har <C>har-select <w>rite(save)
---  X   pencil↓ rect  XX XX |[color 1..14 × 2 chars]| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill <s>hape
+--  X   pencil↓ rect  XX XX |[color 1..14 × 2 chars]| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill <s>hape <u>ndo <C-r>edo
 function M.render(state)
   local buf      = state.palette_buf
   local ns       = state.ns_palette
@@ -25,7 +25,7 @@ function M.render(state)
       string.rep("SS", 14)
     ),
     string.format(
-      " %s   %s%s %s  FF BB |%s| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill <s>hape",
+      " %s   %s%s %s  FF BB |%s| <b>g <Pg>pick-bg <Esc>lift <e>raser <F>ill <s>hape <u>ndo <C-r>edo",
       state.char,
       string.format("%-6s", state.tool):sub(1, 6),
       state.pen_down and "↓" or " ",
