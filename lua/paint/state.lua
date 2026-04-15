@@ -4,21 +4,8 @@ local M = {}
 --- @return table
 function M.new(opts)
   local cells = opts.cells or {}
-  local rows = opts.rows or 40
-  local cols = opts.cols or 120
-
-  if next(cells) == nil then
-    for row = 1, rows do
-      cells[row] = {}
-      for col = 1, cols do
-        cells[row][col] = {
-          fg = "#FFFFFF",
-          bg = "#FFFFFF",
-          char = " ",
-        }
-      end
-    end
-  end
+  local rows = tonumber(opts.rows)
+  local cols = tonumber(opts.cols)
 
   return {
     -- buffer / window handles (set by layout.lua)
@@ -58,6 +45,23 @@ function M.new(opts)
     history     = {},
     future      = {},
   }
+end
+
+function M.init_cells(state)
+  local cells = state.cells
+
+  if next(cells) == nil then
+    for row = 1, state.canvas_rows do
+      cells[row] = {}
+      for col = 1, state.canvas_cols do
+        cells[row][col] = {
+          fg = "#FFFFFF",
+          bg = "#FFFFFF",
+          char = " ",
+        }
+      end
+    end
+  end
 end
 
 return M

@@ -2,18 +2,6 @@ local M = {}
 
 local highlight = require("paint.highlight")
 
---- Fill the canvas buffer with blank lines + right/bottom border.
-function M.init_lines(state)
-  local blank  = string.rep(" ", state.canvas_cols) .. "│"
-  local bottom = string.rep("─", state.canvas_cols) .. "┘"
-  local lines  = {}
-  for i = 1, state.canvas_rows do
-    lines[i] = blank
-  end
-  lines[state.canvas_rows + 1] = bottom
-  vim.api.nvim_buf_set_lines(state.canvas_buf, 0, -1, false, lines)
-end
-
 --- Render the full canvas: text + per-cell highlight extmarks.
 --- Byte offsets for extmarks are computed by walking each row's char sizes,
 --- so multi-byte characters (e.g. "█" = 3 bytes) are handled correctly.
@@ -44,7 +32,7 @@ function M.render(state)
       byte          = byte + #ch
     end
 
-    all_lines[r] = table.concat(chars) .. "│"
+    all_lines[r] = table.concat(chars)
 
     if row_cells then
       for c, cell in pairs(row_cells) do
@@ -56,8 +44,6 @@ function M.render(state)
       end
     end
   end
-
-  all_lines[state.canvas_rows + 1] = string.rep("─", state.canvas_cols) .. "┘"
 
   -- Write text first, then extmarks (set_lines invalidates existing marks).
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, all_lines)
