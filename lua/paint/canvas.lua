@@ -2,26 +2,20 @@ local M = {}
 
 local highlight = require("paint.highlight")
 
---- Render the full canvas: text + per-cell highlight extmarks.
---- Byte offsets for extmarks are computed by walking each row's char sizes,
---- so multi-byte characters (e.g. "█" = 3 bytes) are handled correctly.
-function M.render(state)
-  if state.rendering then return end
-  state.rendering = true
-
-  local buf       = state.canvas_buf
-  local ns        = state.ns_canvas
+--- Full canvas rerender: rebuild all lines and all extmarks.
+local function _render_full(state)
+  local buf = state.canvas_buf
+  local ns  = state.ns_canvas
 
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
 
-  -- Build lines and collect extmark data in one pass per row.
-  local all_lines = {}
-  local pending_marks = {} -- { row0, byte_start, byte_end, hl_name }
+  local all_lines     = {}
+  local pending_marks = {}
 
   for r = 1, state.canvas_rows do
     local row_cells  = state.cells[r]
     local chars      = {}
-    local byte_start = {} -- byte_start[c] = 0-indexed byte offset of cell c
+    local byte_start = {}
     local byte       = 0
 
     for c = 1, state.canvas_cols do
@@ -37,9 +31,8 @@ function M.render(state)
     if row_cells then
       for c, cell in pairs(row_cells) do
         local bs = byte_start[c]
-        local be = bs + #cell.char
         pending_marks[#pending_marks + 1] = {
-          r - 1, bs, be, highlight.ensure_hl(cell.fg, cell.bg)
+          r - 1, bs, bs + #cell.char, highlight.ensure_hl(cell.fg, cell.bg)
         }
       end
     end
@@ -54,6 +47,60 @@ function M.render(state)
       hl_group = m[4],
       priority = 100,
     })
+  end
+end
+
+--- Incremental rerender: update only the rows listed in the dirty set.
+--- Replacing exactly one line at a time keeps extmarks in other rows intact.
+local function _render_rows(state, dirty)
+  local buf = state.canvas_buf
+  local ns  = state.ns_canvas
+
+  for r in pairs(dirty) do
+    local row_cells  = state.cells[r]
+    local chars      = {}
+    local byte_start = {}
+    local byte       = 0
+
+    for c = 1, state.canvas_cols do
+      local cell    = row_cells and row_cells[c] or nil
+      local ch      = (cell and cell.char) or " "
+      byte_start[c] = byte
+      chars[c]      = ch
+      byte          = byte + #ch
+    end
+
+    -- Replace only this row (same line count → extmarks in other rows unaffected).
+    vim.api.nvim_buf_set_lines(buf, r - 1, r, false, { table.concat(chars) })
+    vim.api.nvim_buf_clear_namespace(buf, ns, r - 1, r)
+
+    if row_cells then
+      for c, cell in pairs(row_cells) do
+        local bs = byte_start[c]
+        vim.api.nvim_buf_set_extmark(buf, ns, r - 1, bs, {
+          end_col  = bs + #cell.char,
+          hl_group = highlight.ensure_hl(cell.fg, cell.bg),
+          priority = 100,
+        })
+      end
+    end
+  end
+end
+
+--- Render the canvas.
+--- When state.dirty_rows is a non-nil table, only those rows are updated
+--- (incremental path). When nil, the full canvas is redrawn.
+function M.render(state)
+  if state.rendering then return end
+  state.rendering  = true
+
+  local dirty      = state.dirty_rows
+  state.dirty_rows = nil -- reset before any early return
+
+  if dirty ~= nil then
+    if next(dirty) then _render_rows(state, dirty) end
+  else
+    _render_full(state)
   end
 
   state.rendering = false
@@ -74,6 +121,12 @@ function M.register_keymaps(state)
 
   local function draw_at(row, col)
     tools.apply(state, row, col)
+    -- Pencil/eraser touch exactly one row; mark it dirty for incremental render.
+    -- Fill leaves dirty_rows = nil → full render (spans unpredictable rows).
+    if state.tool == "pencil" or state.tool == "eraser" then
+      state.dirty_rows = state.dirty_rows or {}
+      state.dirty_rows[row] = true
+    end
     M.render(state)
   end
 
@@ -84,10 +137,12 @@ function M.register_keymaps(state)
     if pos.winrow > state.canvas_rows then return end
     if pos.wincol > state.canvas_cols then return end
     draw_at(pos.winrow, pos.wincol)
-    palette.render(state)
+    vim.fn.setcharpos(".", { 0, pos.winrow, pos.wincol, 0 })
   end
 
   -- ── Mouse ────────────────────────────────────────────────────────────────
+  local last_mouse_pos = nil
+
   vim.keymap.set("n", "<LeftMouse>", function()
     local pos = vim.fn.getmousepos()
     if pos.winid == state.palette_win then
@@ -98,12 +153,34 @@ function M.register_keymaps(state)
       end
     else
       tools.push_history(state)
+      last_mouse_pos = { row = pos.winrow, col = pos.wincol }
       draw_at_mouse()
     end
   end, o)
 
   vim.keymap.set("n", "<LeftDrag>", function()
-    draw_at_mouse()
+    local pos = vim.fn.getmousepos()
+
+    if pos.winid ~= state.canvas_win or pos.winrow > state.canvas_rows or pos.wincol > state.canvas_cols then
+      last_mouse_pos = nil
+      return
+    end
+
+    if not last_mouse_pos then
+      draw_at_mouse()
+    else
+      -- Mark only the rows spanned by this line segment as dirty.
+      state.dirty_rows = {}
+      for r = math.min(last_mouse_pos.row, pos.winrow), math.max(last_mouse_pos.row, pos.winrow) do
+        state.dirty_rows[r] = true
+      end
+
+      tools.shape.line(state, last_mouse_pos, { row = pos.winrow, col = pos.wincol })
+
+      M.render(state)
+    end
+
+    last_mouse_pos = { row = pos.winrow, col = pos.wincol }
   end, o)
 
   vim.keymap.set("n", "<RightMouse>", function()

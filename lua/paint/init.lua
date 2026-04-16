@@ -70,17 +70,10 @@ function M.open()
   apply_win_opts(state.canvas_win)
   apply_win_opts(state.palette_win)
   vim.o.mousescroll = "ver:0,hor:0"
+  vim.o.mouse = "a"
 
   -- Adjust visual selection color for better visualition of selected area
   vim.api.nvim_set_hl(state.ns_canvas, 'Visual', { bg = '#0055FF', fg = '#0055FF' })
-
-  -- Enable mouse globally if not already enabled
-  if vim.o.mouse == "" then
-    vim.o.mouse = "a"
-  elseif not vim.o.mouse:find("a") then
-    vim.o.mouse = vim.o.mouse .. "a"
-  end
-  vim.o.mousemoveevent = true
 
   -- Initial render
   canvas.render(state)
